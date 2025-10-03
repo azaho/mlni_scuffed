@@ -160,7 +160,7 @@ class SessionBase(ABC):
                     allow_corrupted=False,
                 )
                 path, data = session.save_data(save_root_dir=save_root_dir)
-                
+
                 session_length = data.ieeg.data.shape[0] / data.ieeg.sampling_rate
                 n_electrodes = data.ieeg.data.shape[1]
                 if "electrical_stimulation" in data.keys():
@@ -168,9 +168,7 @@ class SessionBase(ABC):
                 else:
                     n_stim_events = 0
                 print(f"Saved data: {path}")
-                print(
-                    f"\t\tSession length: {session_length:.2f} seconds\t\t{n_electrodes} electrodes\t\t{n_stim_events} stimulation events"
-                )
+                print(f"\t\tSession length: {session_length:.2f} seconds\t\t{n_electrodes} electrodes\t\t{n_stim_events} stimulation events")
 
     def _load_ieeg_electrodes(self, electrodes_file: str | Path, channels_file: str | Path):
         """
