@@ -99,32 +99,15 @@ class CCEPSession(BIDSSession):
 
         return IrregularTimeSeries(
             timestamps=events_df["onset"].to_numpy(),
-            stimulation_site=events_df["electrical_stimulation_site"]
-            .str.upper()
-            .values.astype(str),  # like 'VT1-VT2'
+            stimulation_site=events_df["electrical_stimulation_site"].str.upper().values.astype(str),  # like 'VT1-VT2'
             duration=events_df["duration"].values,
-            waveform_type=events_df["electrical_stimulation_type"]
-            .str.upper()
-            .values.astype(str),  # all monophasic
-            current=events_df["electrical_stimulation_current"],
+            waveform_type=events_df["electrical_stimulation_type"].str.upper().values.astype(str),  # all monophasic
+            current=events_df["electrical_stimulation_current"].values,
             # frequency=events_df['electrical_stimulation_frequency'].values, # all 0.2 Hz; this is single-pulse stim so the frequency is not well defined here.
-            pulse_width=events_df[
-                "electrical_stimulation_pulsewidth"
-            ].values,  # equal to duration since the pulses are monophasic
+            pulse_width=events_df["electrical_stimulation_pulsewidth"].values,  # equal to duration since the pulses are monophasic
             timekeys=["timestamps"],
             domain="auto",
         )
-
-    def save_data(self, save_root_dir: str | Path) -> tuple:
-        path, data = super().save_data(save_root_dir)
-
-        session_length = data.ieeg.data.shape[0] / data.ieeg.sampling_rate
-        n_electrodes = data.ieeg.data.shape[1]
-        n_stim_events = data.electrical_stimulation.timestamps.shape[0]
-        print(
-            f"\t\tSession length: {session_length:.2f} seconds\t\t{n_electrodes} electrodes\t\t{n_stim_events} stimulation events"
-        )
-        return path, data
 
 
 if __name__ == "__main__":
