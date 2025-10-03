@@ -3,9 +3,7 @@ from copy import deepcopy
 import numpy as np
 
 
-def electrode_subset_batch(
-    batch: dict, max_n_electrodes: int, inplace: bool = False
-) -> dict:
+def electrode_subset_batch(batch: dict, max_n_electrodes: int, inplace: bool = False) -> dict:
     """
     Subset the electrodes to a maximum number of electrodes.
 
@@ -27,9 +25,7 @@ def electrode_subset_batch(
     electrode_labels = batch["channels"]["id"]
 
     if len(electrode_labels) > max_n_electrodes:
-        selected_indices = np.random.choice(
-            len(electrode_labels), max_n_electrodes, replace=False
-        )
+        selected_indices = np.random.choice(len(electrode_labels), max_n_electrodes, replace=False)
         electrode_data = electrode_data[:, selected_indices, :]
         electrode_labels = electrode_labels[selected_indices]
     else:

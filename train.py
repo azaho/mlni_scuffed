@@ -78,18 +78,12 @@ def main(cfg: DictConfig):
             config=OmegaConf.to_container(cfg, resolve=True),
         )
         loggers.append(wandb_logger)
-        logger.info(
-            f"W&B logging enabled: {cfg.cluster.wandb_entity}/{cfg.cluster.wandb_project}"
-        )
+        logger.info(f"W&B logging enabled: {cfg.cluster.wandb_entity}/{cfg.cluster.wandb_project}")
     else:
         logger.info("W&B logging disabled (wandb_project and wandb_entity are empty)")
 
     # Set up trainer
-    precision = (
-        "bf16-mixed"
-        if cfg.cluster.use_mixed_precision and cfg.cluster.amp_dtype == "bfloat16"
-        else "32-true"
-    )
+    precision = "bf16-mixed" if cfg.cluster.use_mixed_precision and cfg.cluster.amp_dtype == "bfloat16" else "32-true"
 
     trainer = pl.Trainer(
         max_epochs=cfg.training.n_epochs,

@@ -45,9 +45,7 @@ class SingleSessionDataset(Dataset):
             data = Data.from_hdf5(f)
 
             if "[" in session_string:
-                self.time_from, self.time_to = session_string.split("[")[1][:-1].split(
-                    ":"
-                )
+                self.time_from, self.time_to = session_string.split("[")[1][:-1].split(":")
                 self.time_from, self.time_to = (
                     float(self.time_from),
                     float(self.time_to),
@@ -57,9 +55,7 @@ class SingleSessionDataset(Dataset):
 
             # TODO: Handle artifacts here. Goal: go over every start_time, if it contians some artifact channels, remove those channels from that time.
             # If as result, too few channels remain, remove the start_time.
-            self.start_times = np.arange(
-                self.time_from, self.time_to - self.context_length, self.context_length
-            )
+            self.start_times = np.arange(self.time_from, self.time_to - self.context_length, self.context_length)
 
     def __len__(self):
         return len(self.start_times)
@@ -82,9 +78,7 @@ class SingleSessionDataset(Dataset):
 
         return {
             "ieeg": {
-                "data": torch.from_numpy(
-                    data.ieeg.data.T
-                ),  # shape: (n_channels, n_samples)
+                "data": torch.from_numpy(data.ieeg.data.T),  # shape: (n_channels, n_samples)
                 "sampling_rate": int(data.ieeg.sampling_rate),
             },
             "channels": {"id": data.channels.id},
@@ -105,12 +99,7 @@ class MultiSessionDataset(ConcatDataset):
             session_strings (list): List of session strings, potentially containing glob patterns (*, ?, [seq], [!seq])
             context_length (float): Context length in seconds
         """
-        super().__init__(
-            [
-                SingleSessionDataset(session_string, context_length)
-                for session_string in self._expand_session_wildcards(session_strings)
-            ]
-        )
+        super().__init__([SingleSessionDataset(session_string, context_length) for session_string in self._expand_session_wildcards(session_strings)])
 
     # Code that can be used to discover directories in the dataset
     def _discover_dirs(self, path, require_data_h5=False):
@@ -118,18 +107,10 @@ class MultiSessionDataset(ConcatDataset):
         path = Path(path)
         if not path.exists():
             return []
-        dirs = [
-            d.name
-            for d in path.iterdir()
-            if d.is_dir()
-            and not d.name.startswith(".")
-            and (not require_data_h5 or (d / "data.h5").exists())
-        ]
+        dirs = [d.name for d in path.iterdir() if d.is_dir() and not d.name.startswith(".") and (not require_data_h5 or (d / "data.h5").exists())]
         return sorted(dirs)
 
-    def _expand_session_pattern(
-        self, data_root, brainset_pattern, subject_pattern, session_pattern
-    ):
+    def _expand_session_pattern(self, data_root, brainset_pattern, subject_pattern, session_pattern):
         """Recursively expand glob patterns in brainset/subject/session pattern."""
         data_root = Path(data_root)
 
@@ -143,13 +124,9 @@ class MultiSessionDataset(ConcatDataset):
             all_subjects = self._discover_dirs(data_root / brainset)
             subjects = [s for s in all_subjects if fnmatch(s, subject_pattern)]
             for subject in subjects:
-                all_sessions = self._discover_dirs(
-                    data_root / brainset / subject, require_data_h5=True
-                )
+                all_sessions = self._discover_dirs(data_root / brainset / subject, require_data_h5=True)
                 sessions = [s for s in all_sessions if fnmatch(s, session_pattern)]
-                expanded.extend(
-                    f"{brainset}/{subject}/{session}" for session in sessions
-                )
+                expanded.extend(f"{brainset}/{subject}/{session}" for session in sessions)
 
         return expanded
 
@@ -169,17 +146,11 @@ class MultiSessionDataset(ConcatDataset):
 
         expanded = []
         for session_string in session_strings:
-            time_range = (
-                ("[" + session_string.split("[")[1]) if "[" in session_string else ""
-            )
+            time_range = ("[" + session_string.split("[")[1]) if "[" in session_string else ""
 
             # Parse and expand pattern
-            brainset_pattern, subject_pattern, session_pattern = session_string.split(
-                "["
-            )[0].split("/")
-            matches = self._expand_session_pattern(
-                data_root, brainset_pattern, subject_pattern, session_pattern
-            )
+            brainset_pattern, subject_pattern, session_pattern = session_string.split("[")[0].split("/")
+            matches = self._expand_session_pattern(data_root, brainset_pattern, subject_pattern, session_pattern)
             expanded.extend(f"{m}{time_range}" for m in matches)
 
         return sorted(expanded)
@@ -221,11 +192,7 @@ class SessionBatchSampler(torch.utils.data.Sampler):
                 random.shuffle(session_indices)
 
             # Create batches for this session
-            session_batches = [
-                session_indices[i : i + self.batch_size]
-                for i in range(0, len(session_indices), self.batch_size)
-                if not self.drop_last or i + self.batch_size <= len(session_indices)
-            ]
+            session_batches = [session_indices[i : i + self.batch_size] for i in range(0, len(session_indices), self.batch_size) if not self.drop_last or i + self.batch_size <= len(session_indices)]
             all_batches.extend(session_batches)
             start_idx += size
 
@@ -238,10 +205,7 @@ class SessionBatchSampler(torch.utils.data.Sampler):
     def __len__(self):
         if self.drop_last:
             return sum(size // self.batch_size for size in self.dataset_sizes)
-        return sum(
-            (size + self.batch_size - 1) // self.batch_size
-            for size in self.dataset_sizes
-        )
+        return sum((size + self.batch_size - 1) // self.batch_size for size in self.dataset_sizes)
 
 
 from preprocess.electrode_subset import electrode_subset_batch
@@ -291,9 +255,7 @@ def ieeg_collate_fn(batch: list, cfg: DictConfig | None = None) -> dict:
     if cfg is not None:
         if cfg.model.signal_preprocessing.laplacian_rereference:
             collated = laplacian_rereference_batch(collated, inplace=True)
-        collated = electrode_subset_batch(
-            collated, cfg.training.max_n_electrodes, inplace=True
-        )
+        collated = electrode_subset_batch(collated, cfg.training.max_n_electrodes, inplace=True)
 
     return collated
 
@@ -338,9 +300,7 @@ class iEEGDataModule(pl.LightningDataModule):
             train_subject_trials = yaml.safe_load(f)
 
         logger.info(f"Loading {len(train_subject_trials)} training sessions...")
-        self.full_dataset = MultiSessionDataset(
-            train_subject_trials, self.cfg.model.context_length
-        )
+        self.full_dataset = MultiSessionDataset(train_subject_trials, self.cfg.model.context_length)
 
         # Extract individual session sizes from the ConcatDataset
         self.session_sizes = [len(dataset) for dataset in self.full_dataset.datasets]
@@ -350,9 +310,7 @@ class iEEGDataModule(pl.LightningDataModule):
         # For now, we use all data for both training and validation with session-aware batching
         # TODO: Implement session-level train/val split if needed
 
-        logger.info(
-            f"Total samples across {len(self.session_sizes)} sessions: {len(self.full_dataset)}"
-        )
+        logger.info(f"Total samples across {len(self.session_sizes)} sessions: {len(self.full_dataset)}")
         logger.info(f"Session sizes: {self.session_sizes}")
 
     def train_dataloader(self):

@@ -32,34 +32,21 @@ class CCEPSession(BIDSSession):
         self.data_dict["electrical_stimulation"] = self._load_electrical_stimulation()
 
     @classmethod
-    def discover_sessions(
-        cls, subject_identifier: str, root_dir: str | Path | None = None
-    ) -> list:
+    def discover_sessions(cls, subject_identifier: str, root_dir: str | Path | None = None) -> list:
         if root_dir is None:
             root_dir = cls.find_root_dir()
         subject_dir = Path(root_dir) / subject_identifier
 
         # Find all runs in the subject (equivalent to sessions)
-        session_subdir = (
-            next(subject_dir.iterdir()) / "ieeg"
-        )  # it is always either subject_dir + ses-1 or ses-1b
-        assert session_subdir.exists(), (
-            f"Session subdirectory not found: {session_subdir}"
-        )
+        session_subdir = next(subject_dir.iterdir()) / "ieeg"  # it is always either subject_dir + ses-1 or ses-1b
+        assert session_subdir.exists(), f"Session subdirectory not found: {session_subdir}"
         eeg_files = list(session_subdir.glob(f"*{subject_identifier}*.eeg"))
-        assert len(eeg_files) >= 1, (
-            f"Expected at least 1 eeg file, found {len(eeg_files)}."
-        )
-        runs = [
-            str(eeg_file).split(subject_identifier)[-1][1:-9].split("run-")[-1]
-            for eeg_file in eeg_files
-        ]  #
+        assert len(eeg_files) >= 1, f"Expected at least 1 eeg file, found {len(eeg_files)}."
+        runs = [str(eeg_file).split(subject_identifier)[-1][1:-9].split("run-")[-1] for eeg_file in eeg_files]  #
 
         # Find the electrodes file
         electrodes_file = list(session_subdir.glob("*electrodes.tsv"))
-        assert len(electrodes_file) == 1, (
-            f"Expected 1 electrodes file, found {len(electrodes_file)}: {electrodes_file}"
-        )
+        assert len(electrodes_file) == 1, f"Expected 1 electrodes file, found {len(electrodes_file)}: {electrodes_file}"
         electrodes_file = str(electrodes_file[0])
 
         # Add all runs (sessions) to the all_sessions list
@@ -67,18 +54,14 @@ class CCEPSession(BIDSSession):
         for run in runs:
             eeg_path = BIDSPath(
                 subject=subject_identifier[4:],  # remove the "sub-" prefix
-                session=next(subject_dir.iterdir()).name[
-                    4:
-                ],  # remove the "ses-" prefix
+                session=next(subject_dir.iterdir()).name[4:],  # remove the "ses-" prefix
                 task="SPESclin",
                 run=run,
                 datatype="ieeg",
                 root=root_dir,
             )
             eeg_file_path = str(eeg_path)
-            session_identifier = eeg_file_path.split(subject_identifier)[-1][
-                1:-10
-            ]  # extract identifier in the form like ses-1_task-SPESclin_run-031556
+            session_identifier = eeg_file_path.split(subject_identifier)[-1][1:-10]  # extract identifier in the form like ses-1_task-SPESclin_run-031556
             all_sessions.append(
                 {
                     "session_identifier": session_identifier,
@@ -93,24 +76,16 @@ class CCEPSession(BIDSSession):
     def _load_electrical_stimulation(self) -> IrregularTimeSeries:
         events_file = self.session["events_file"]
         events_df = pd.read_csv(events_file, sep="\t")
-        events_df = events_df[
-            events_df["trial_type"].str.upper().isin(["ELECTRICAL_STIMULATION"])
-        ]
+        events_df = events_df[events_df["trial_type"].str.upper().isin(["ELECTRICAL_STIMULATION"])]
 
         return IrregularTimeSeries(
             timestamps=events_df["onset"].to_numpy(),
-            stimulation_site=events_df["electrical_stimulation_site"]
-            .str.upper()
-            .values.astype(str),  # like 'VT1-VT2'
+            stimulation_site=events_df["electrical_stimulation_site"].str.upper().values.astype(str),  # like 'VT1-VT2'
             duration=events_df["duration"].values,
-            waveform_type=events_df["electrical_stimulation_type"]
-            .str.upper()
-            .values.astype(str),  # all monophasic
+            waveform_type=events_df["electrical_stimulation_type"].str.upper().values.astype(str),  # all monophasic
             current=events_df["electrical_stimulation_current"],
             # frequency=events_df['electrical_stimulation_frequency'].values, # all 0.2 Hz; this is single-pulse stim so the frequency is not well defined here.
-            pulse_width=events_df[
-                "electrical_stimulation_pulsewidth"
-            ].values,  # equal to duration since the pulses are monophasic
+            pulse_width=events_df["electrical_stimulation_pulsewidth"].values,  # equal to duration since the pulses are monophasic
             timekeys=["timestamps"],
             domain="auto",
         )
@@ -121,9 +96,7 @@ class CCEPSession(BIDSSession):
         session_length = data.ieeg.data.shape[0] / data.ieeg.sampling_rate
         n_electrodes = data.ieeg.data.shape[1]
         n_stim_events = data.electrical_stimulation.timestamps.shape[0]
-        print(
-            f"\t\tSession length: {session_length:.2f} seconds\t\t{n_electrodes} electrodes\t\t{n_stim_events} stimulation events"
-        )
+        print(f"\t\tSession length: {session_length:.2f} seconds\t\t{n_electrodes} electrodes\t\t{n_stim_events} stimulation events")
         return path, data
 
 
@@ -136,6 +109,4 @@ if __name__ == "__main__":
     if save_root_dir is None:
         raise ValueError("DATA_ROOT_DIR environment variable not set.")
 
-    CCEPSession.save_all_subjects_sessions(
-        root_dir=root_dir, save_root_dir=save_root_dir
-    )
+    CCEPSession.save_all_subjects_sessions(root_dir=root_dir, save_root_dir=save_root_dir)

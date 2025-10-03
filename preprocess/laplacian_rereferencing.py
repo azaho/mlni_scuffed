@@ -36,9 +36,7 @@ def get_all_laplacian_electrodes(electrode_labels: list[str]) -> tuple[list[str]
         (x, y) = stem
         return ((x, y + 1) in stems) or ((x, y - 1) in stems)
 
-    def _get_neighbors_original_labels(
-        label: str, label_to_stem: dict, stem_to_labels: dict
-    ) -> list[str]:
+    def _get_neighbors_original_labels(label: str, label_to_stem: dict, stem_to_labels: dict) -> list[str]:
         stem_prefix, stem_num = label_to_stem[label]
         neighbor_nums = [stem_num + 1, stem_num - 1]
         neighbors = []
@@ -60,15 +58,10 @@ def get_all_laplacian_electrodes(electrode_labels: list[str]) -> tuple[list[str]
         stem_to_labels[stem].append(label)
 
     # Find laplacian electrodes (those with neighbors)
-    laplacian_labels = [
-        label for label, stem in label_to_stem.items() if _has_neighbors(stem, stems)
-    ]
+    laplacian_labels = [label for label, stem in label_to_stem.items() if _has_neighbors(stem, stems)]
 
     # Build neighbors dict using original labels
-    neighbors = {
-        label: _get_neighbors_original_labels(label, label_to_stem, stem_to_labels)
-        for label in laplacian_labels
-    }
+    neighbors = {label: _get_neighbors_original_labels(label, label_to_stem, stem_to_labels) for label in laplacian_labels}
 
     return laplacian_labels, neighbors
 
@@ -96,20 +89,11 @@ def laplacian_rereference_neural_data(
         batch_unsqueeze = True
         electrode_data = electrode_data.unsqueeze(0)
 
-    laplacian_electrodes, laplacian_neighbors = get_all_laplacian_electrodes(
-        electrode_labels
-    )
-    laplacian_neighbor_indices = {
-        laplacian_electrode_label: [
-            electrode_labels.index(neighbor_label) for neighbor_label in neighbors
-        ]
-        for laplacian_electrode_label, neighbors in laplacian_neighbors.items()
-    }
+    laplacian_electrodes, laplacian_neighbors = get_all_laplacian_electrodes(electrode_labels)
+    laplacian_neighbor_indices = {laplacian_electrode_label: [electrode_labels.index(neighbor_label) for neighbor_label in neighbors] for laplacian_electrode_label, neighbors in laplacian_neighbors.items()}
 
     batch_size, n_electrodes, n_samples = electrode_data.shape
-    rereferenced_n_electrodes = (
-        len(laplacian_electrodes) if remove_non_laplacian else n_electrodes
-    )
+    rereferenced_n_electrodes = len(laplacian_electrodes) if remove_non_laplacian else n_electrodes
     rereferenced_data = torch.zeros(
         (batch_size, rereferenced_n_electrodes, n_samples),
         dtype=electrode_data.dtype,
@@ -120,11 +104,7 @@ def laplacian_rereference_neural_data(
     original_electrode_indices = []
     for original_electrode_index, electrode_label in enumerate(electrode_labels):
         if electrode_label in laplacian_electrodes:
-            rereferenced_data[:, electrode_i] = electrode_data[
-                :, electrode_i
-            ] - torch.mean(
-                electrode_data[:, laplacian_neighbor_indices[electrode_label]], dim=1
-            )
+            rereferenced_data[:, electrode_i] = electrode_data[:, electrode_i] - torch.mean(electrode_data[:, laplacian_neighbor_indices[electrode_label]], dim=1)
             original_electrode_indices.append(original_electrode_index)
             electrode_i += 1
         else:
@@ -145,9 +125,7 @@ def laplacian_rereference_neural_data(
     )
 
 
-def laplacian_rereference_batch(
-    batch: dict, remove_non_laplacian: bool = True, inplace: bool = False
-):
+def laplacian_rereference_batch(batch: dict, remove_non_laplacian: bool = True, inplace: bool = False):
     """
     Rereference the neural data using the laplacian method (subtract the mean of the neighbors, as determined by the electrode labels)
 
@@ -171,11 +149,7 @@ def laplacian_rereference_batch(
     electrode_labels = batch["channels"]["id"].tolist()
 
     # laplacian_rereference_neural_data expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)
-    rereferenced_data, rereferenced_labels, original_electrode_indices = (
-        laplacian_rereference_neural_data(
-            electrode_data, electrode_labels, remove_non_laplacian=remove_non_laplacian
-        )
-    )
+    rereferenced_data, rereferenced_labels, original_electrode_indices = laplacian_rereference_neural_data(electrode_data, electrode_labels, remove_non_laplacian=remove_non_laplacian)
 
     # Update batch with rereferenced data
     batch["ieeg"]["data"] = rereferenced_data
@@ -194,12 +168,8 @@ if __name__ == "__main__":
     )
     sample = dataset[0]
 
-    print(
-        f"Original data shape: {sample['ieeg']['data'].shape}", sample["ieeg"]["data"]
-    )
-    print(
-        f"Original channel labels (length: {len(sample['channels']['id'])}): {sample['channels']['id']}"
-    )
+    print(f"Original data shape: {sample['ieeg']['data'].shape}", sample["ieeg"]["data"])
+    print(f"Original channel labels (length: {len(sample['channels']['id'])}): {sample['channels']['id']}")
 
     # Apply laplacian rereferencing
     rereferenced_sample = laplacian_rereference_batch(sample, inplace=True)
@@ -208,6 +178,4 @@ if __name__ == "__main__":
         f"\nRereferenced data shape: {rereferenced_sample['ieeg']['data'].shape}",
         rereferenced_sample["ieeg"]["data"],
     )
-    print(
-        f"Rereferenced channel labels (length: {len(rereferenced_sample['channels']['id'])}): {rereferenced_sample['channels']['id']}"
-    )
+    print(f"Rereferenced channel labels (length: {len(rereferenced_sample['channels']['id'])}): {rereferenced_sample['channels']['id']}")

@@ -48,24 +48,14 @@ class SessionBase(ABC):
 
         # Discover subjects and ensure the subject identifier exists in the dataset
         self.all_subjects = self.__class__.discover_subjects(self.root_dir)
-        assert self.subject_identifier in self.all_subjects, (
-            f"Subject {self.subject_identifier} not found in dataset. List of subjects: {self.all_subjects}"
-        )
+        assert self.subject_identifier in self.all_subjects, f"Subject {self.subject_identifier} not found in dataset. List of subjects: {self.all_subjects}"
         self.subject_dir = self.root_dir / self.subject_identifier
 
         # Discover sessions and ensure the session identifier exists in the dataset
-        self.all_sessions = self.__class__.discover_sessions(
-            self.subject_identifier, root_dir=self.root_dir
-        )
-        all_session_identifiers = [
-            session["session_identifier"] for session in self.all_sessions
-        ]
-        assert self.session_identifier in all_session_identifiers, (
-            f"Session {self.session_identifier} not found in {self.all_sessions}"
-        )
-        self.session = self.all_sessions[
-            all_session_identifiers.index(self.session_identifier)
-        ]
+        self.all_sessions = self.__class__.discover_sessions(self.subject_identifier, root_dir=self.root_dir)
+        all_session_identifiers = [session["session_identifier"] for session in self.all_sessions]
+        assert self.session_identifier in all_session_identifiers, f"Session {self.session_identifier} not found in {self.all_sessions}"
+        self.session = self.all_sessions[all_session_identifiers.index(self.session_identifier)]
 
     @classmethod
     def find_root_dir(cls) -> str:
@@ -75,10 +65,7 @@ class SessionBase(ABC):
         try:
             return os.environ["ROOT_DIR_" + cls.dataset_identifier.upper()]
         except KeyError:
-            raise ValueError(
-                f"When loading dataset {cls.dataset_identifier}, ROOT_DIR_{cls.dataset_identifier.upper()} not set in environment variables. "
-                f"Please either set the ROOT_DIR_{cls.dataset_identifier.upper()} environment variable or pass the root_dir argument to the constructor."
-            ) from None
+            raise ValueError(f"When loading dataset {cls.dataset_identifier}, ROOT_DIR_{cls.dataset_identifier.upper()} not set in environment variables. Please either set the ROOT_DIR_{cls.dataset_identifier.upper()} environment variable or pass the root_dir argument to the constructor.") from None
 
     @classmethod
     @abstractmethod
@@ -96,9 +83,7 @@ class SessionBase(ABC):
 
     @classmethod
     @abstractmethod
-    def discover_sessions(
-        cls, subject_identifier: str, root_dir: str | Path | None = None
-    ):
+    def discover_sessions(cls, subject_identifier: str, root_dir: str | Path | None = None):
         """
         Discover available sessions for the subject subject_identifier in the root_dir. This is a static method that can be used to discover sessions for any subject in the dataset.
 
@@ -137,18 +122,11 @@ class SessionBase(ABC):
                 path: The path to the saved data.
                 data: The data for the session in the format of a temporaldata.Data object.
         """
-        path = (
-            Path(save_root_dir)
-            / self.dataset_identifier
-            / self.subject_identifier
-            / self.session_identifier
-        )
+        path = Path(save_root_dir) / self.dataset_identifier / self.subject_identifier / self.session_identifier
         data = self.get_data()
 
         if path.exists():
-            logger.info(
-                f"Data for subject {self.subject_identifier} and session {self.session_identifier} already exists at {path}. Skipping."
-            )
+            logger.info(f"Data for subject {self.subject_identifier} and session {self.session_identifier} already exists at {path}. Skipping.")
             return path, data
 
         path.mkdir(parents=True, exist_ok=True)
@@ -157,15 +135,11 @@ class SessionBase(ABC):
         with h5py.File(path / "data.h5", "w") as f:
             data.to_hdf5(f)
 
-        logger.info(
-            f"Saved data for subject {self.subject_identifier} and session {self.session_identifier} to {path}"
-        )
+        logger.info(f"Saved data for subject {self.subject_identifier} and session {self.session_identifier} to {path}")
         return path, data
 
     @classmethod
-    def save_all_subjects_sessions(
-        cls, root_dir: str | Path | None, save_root_dir: str | Path
-    ):
+    def save_all_subjects_sessions(cls, root_dir: str | Path | None, save_root_dir: str | Path):
         """Save all subjects and sessions to the specified directory.
 
         Args:
@@ -173,9 +147,7 @@ class SessionBase(ABC):
             save_root_dir (str | Path): Root directory to save the processed data.
         """
         for subject_identifier in cls.discover_subjects(root_dir=root_dir):
-            for session in cls.discover_sessions(
-                subject_identifier=subject_identifier, root_dir=root_dir
-            ):
+            for session in cls.discover_sessions(subject_identifier=subject_identifier, root_dir=root_dir):
                 session_identifier = session["session_identifier"]
                 session = cls(
                     subject_identifier=subject_identifier,
@@ -185,9 +157,7 @@ class SessionBase(ABC):
                 )
                 session.save_data(save_root_dir=save_root_dir)
 
-    def _load_ieeg_electrodes(
-        self, electrodes_file: str | Path, channels_file: str | Path
-    ):
+    def _load_ieeg_electrodes(self, electrodes_file: str | Path, channels_file: str | Path):
         """
         This is an optional function to implement (only if the session contains ieeg data). Load the electrodes from the electrodes file.
 
@@ -242,9 +212,7 @@ class BIDSSession(SessionBase):
             allow_corrupted=allow_corrupted,
         )
 
-        self.data_dict["channels"] = self._load_ieeg_electrodes(
-            self.session["ieeg_electrodes_file"], self.session["ieeg_channels_file"]
-        )
+        self.data_dict["channels"] = self._load_ieeg_electrodes(self.session["ieeg_electrodes_file"], self.session["ieeg_channels_file"])
         self.data_dict["ieeg"] = self._load_ieeg_data(self.session["ieeg_file"])
 
     @classmethod
@@ -256,19 +224,13 @@ class BIDSSession(SessionBase):
 
         participants_file = root_dir / "participants.tsv"
         if not participants_file.exists():
-            raise FileNotFoundError(
-                f"participants.tsv not found in {root_dir} (looking for path: {participants_file})"
-            )
+            raise FileNotFoundError(f"participants.tsv not found in {root_dir} (looking for path: {participants_file})")
 
         participants_df = pd.read_csv(participants_file, sep="\t")
-        assert "participant_id" in participants_df.columns, (
-            "participants.tsv found but no 'participant_id' column present"
-        )
+        assert "participant_id" in participants_df.columns, "participants.tsv found but no 'participant_id' column present"
         return participants_df["participant_id"].to_list()
 
-    def _load_ieeg_electrodes(
-        self, electrodes_file: str | Path, channels_file: str | Path
-    ):
+    def _load_ieeg_electrodes(self, electrodes_file: str | Path, channels_file: str | Path):
         electrodes_df = pd.read_csv(electrodes_file, sep="\t")
         channels_df = pd.read_csv(channels_file, sep="\t")
 
@@ -277,17 +239,13 @@ class BIDSSession(SessionBase):
 
         # Filter channels to only include ECOG or SEEG types and good channels if not allowing corrupted data
         if "type" in channels_df.columns:
-            channels_df = channels_df[
-                channels_df["type"].str.upper().isin(["ECOG", "SEEG"])
-            ]
+            channels_df = channels_df[channels_df["type"].str.upper().isin(["ECOG", "SEEG"])]
         if ("status" in channels_df.columns) and (not self.allow_corrupted):
             channels_df = channels_df[channels_df["status"].str.upper().isin(["GOOD"])]
 
         # Merge electrode coordinates into channels dataframe
         # For each channel, find the corresponding electrode and copy x, y, z coordinates
-        channels_df = channels_df[["name", "type"]].merge(
-            electrodes_df[["name", "x", "y", "z"]], on="name", how="left"
-        )
+        channels_df = channels_df[["name", "type"]].merge(electrodes_df[["name", "x", "y", "z"]], on="name", how="left")
 
         electrodes = ArrayDict(
             id=channels_df["name"].array.astype(str),
@@ -302,19 +260,11 @@ class BIDSSession(SessionBase):
     def _load_ieeg_data(self, ieeg_file: str | Path, suppress_warnings: bool = True):
         if suppress_warnings:
             with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore", message="No BIDS -> MNE mapping found"
-                )
-                warnings.filterwarnings(
-                    "ignore", message="Unable to map the following column"
-                )
+                warnings.filterwarnings("ignore", message="No BIDS -> MNE mapping found")
+                warnings.filterwarnings("ignore", message="Unable to map the following column")
                 warnings.filterwarnings("ignore", message="Not setting positions")
-                warnings.filterwarnings(
-                    "ignore", message="DigMontage is only a subset of info."
-                )
-                warnings.filterwarnings(
-                    "ignore", category=RuntimeWarning, module="mne_bids"
-                )
+                warnings.filterwarnings("ignore", message="DigMontage is only a subset of info.")
+                warnings.filterwarnings("ignore", category=RuntimeWarning, module="mne_bids")
                 raw = read_raw_bids(ieeg_file, verbose=False)
         else:
             raw = read_raw_bids(ieeg_file, verbose=True)
@@ -322,8 +272,7 @@ class BIDSSession(SessionBase):
         raw = raw.pick(self.data_dict["channels"].id)
 
         return RegularTimeSeries(
-            data=raw.get_data().astype(np.float32).T
-            * 1e6,  # shape should be (n_samples, n_channels), and convert to microvolts
+            data=raw.get_data().astype(np.float32).T * 1e6,  # shape should be (n_samples, n_channels), and convert to microvolts
             sampling_rate=int(raw.info["sfreq"]),
             domain_start=0.0,  # Start of the domain (in seconds)
             domain="auto",  # Automatically determine the domain based on the data # type:ignore
