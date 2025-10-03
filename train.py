@@ -4,6 +4,7 @@ import hydra
 import pytorch_lightning as pl
 import torch
 from dotenv import load_dotenv
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.callbacks import (
     DeviceStatsMonitor,
@@ -20,6 +21,7 @@ from model.mse_ar import iEEGTransformer
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def main(cfg: DictConfig):
     logger = logging.getLogger(__name__)
+    hydra_wd = HydraConfig.get().runtime.output_dir
 
     # Set random seed for reproducibility
     if cfg.training.random_seed is None:
@@ -46,7 +48,7 @@ def main(cfg: DictConfig):
     # Set up callbacks
     callbacks = [
         ModelCheckpoint(
-            dirpath="checkpoints",
+            dirpath=f"{hydra_wd}/checkpoints",
             filename="{epoch:02d}-{val_loss:.4f}",
             monitor="val_loss",
             mode="min",
@@ -65,9 +67,9 @@ def main(cfg: DictConfig):
     loggers = []
 
     # CSV Logger (always active) for local logging
-    csv_logger = CSVLogger(save_dir="logs", name="training_logs")
+    csv_logger = CSVLogger(save_dir=f"{hydra_wd}/logs", name="training_logs")
     loggers.append(csv_logger)
-    logger.info("CSV logging enabled: logs/training_logs")
+    logger.info(f"CSV logging enabled: {hydra_wd}/logs/training_logs")
 
     # WandB Logger (optional)
     if cfg.cluster.wandb_project and cfg.cluster.wandb_entity:
@@ -75,6 +77,7 @@ def main(cfg: DictConfig):
             project=cfg.cluster.wandb_project,
             entity=cfg.cluster.wandb_entity,
             name=cfg.training.setup_name,
+            save_dir=hydra_wd,
             config=OmegaConf.to_container(cfg, resolve=True),
         )
         loggers.append(wandb_logger)
