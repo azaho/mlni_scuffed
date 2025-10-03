@@ -1,97 +1,141 @@
+import os
+from pathlib import Path
+
+import pandas as pd
+from mne_bids import BIDSPath
+from temporaldata import IrregularTimeSeries
+
 from .base import BIDSSession
 
-from temporaldata import ArrayDict, RegularTimeSeries, IrregularTimeSeries
-from pathlib import Path
-import pandas as pd
-import numpy as np
-import os
-
-from mne_bids import BIDSPath
 
 class CCEPSession(BIDSSession):
     """
     This class is used to load the iEEG neural data for a given session from the CCEP OpenNeuro dataset.
     """
-    dataset_identifier = "vanblooijs_hermes_developmental_2023"
-    def __init__(self, subject_identifier, session_identifier, root_dir=None, allow_corrupted=False):
-        super().__init__(subject_identifier, session_identifier, root_dir=root_dir, allow_corrupted=allow_corrupted)
 
-        self.data_dict['electrical_stimulation'] = self._load_electrical_stimulation()
-    
+    dataset_identifier = "vanblooijs_hermes_developmental_2023"
+
+    def __init__(
+        self,
+        subject_identifier,
+        session_identifier,
+        root_dir=None,
+        allow_corrupted=False,
+    ):
+        super().__init__(
+            subject_identifier,
+            session_identifier,
+            root_dir=root_dir,
+            allow_corrupted=allow_corrupted,
+        )
+
+        self.data_dict["electrical_stimulation"] = self._load_electrical_stimulation()
+
     @classmethod
-    def discover_sessions(cls, subject_identifier, root_dir=None):
-        if root_dir is None: root_dir = cls.find_root_dir()
+    def discover_sessions(
+        cls, subject_identifier: str, root_dir: str | Path | None = None
+    ) -> list:
+        if root_dir is None:
+            root_dir = cls.find_root_dir()
         subject_dir = Path(root_dir) / subject_identifier
 
         # Find all runs in the subject (equivalent to sessions)
-        session_subdir = next(subject_dir.iterdir()) / "ieeg" # it is always either subject_dir + ses-1 or ses-1b
-        assert session_subdir.exists(), f"Session subdirectory not found: {session_subdir}"
+        session_subdir = (
+            next(subject_dir.iterdir()) / "ieeg"
+        )  # it is always either subject_dir + ses-1 or ses-1b
+        assert session_subdir.exists(), (
+            f"Session subdirectory not found: {session_subdir}"
+        )
         eeg_files = list(session_subdir.glob(f"*{subject_identifier}*.eeg"))
-        assert len(eeg_files) >= 1, f"Expected at least 1 eeg file, found {len(eeg_files)}."
-        runs = [str(eeg_file).split(subject_identifier)[-1][1:-9].split('run-')[-1] for eeg_file in eeg_files] # 
+        assert len(eeg_files) >= 1, (
+            f"Expected at least 1 eeg file, found {len(eeg_files)}."
+        )
+        runs = [
+            str(eeg_file).split(subject_identifier)[-1][1:-9].split("run-")[-1]
+            for eeg_file in eeg_files
+        ]  #
 
         # Find the electrodes file
-        electrodes_file = list(session_subdir.glob(f"*electrodes.tsv"))
-        assert len(electrodes_file) == 1, f"Expected 1 electrodes file, found {len(electrodes_file)}: {electrodes_file}"
+        electrodes_file = list(session_subdir.glob("*electrodes.tsv"))
+        assert len(electrodes_file) == 1, (
+            f"Expected 1 electrodes file, found {len(electrodes_file)}: {electrodes_file}"
+        )
         electrodes_file = str(electrodes_file[0])
 
         # Add all runs (sessions) to the all_sessions list
         all_sessions = []
         for run in runs:
             eeg_path = BIDSPath(
-                subject=subject_identifier[4:], # remove the "sub-" prefix
-                session=next(subject_dir.iterdir()).name[4:], # remove the "ses-" prefix
-                task="SPESclin", 
-                run=run, 
-                datatype="ieeg", 
-                root=root_dir)
+                subject=subject_identifier[4:],  # remove the "sub-" prefix
+                session=next(subject_dir.iterdir()).name[
+                    4:
+                ],  # remove the "ses-" prefix
+                task="SPESclin",
+                run=run,
+                datatype="ieeg",
+                root=root_dir,
+            )
             eeg_file_path = str(eeg_path)
-            session_identifier = eeg_file_path.split(subject_identifier)[-1][1:-10] # extract identifier in the form like ses-1_task-SPESclin_run-031556
-            all_sessions.append({
-                "session_identifier": session_identifier,
-                "events_file": eeg_file_path[:-10] + "_events.tsv",
-                "ieeg_file": eeg_path,
-                "ieeg_electrodes_file": electrodes_file,
-                "ieeg_channels_file": eeg_file_path[:-10] + "_channels.tsv",
-            })
+            session_identifier = eeg_file_path.split(subject_identifier)[-1][
+                1:-10
+            ]  # extract identifier in the form like ses-1_task-SPESclin_run-031556
+            all_sessions.append(
+                {
+                    "session_identifier": session_identifier,
+                    "events_file": eeg_file_path[:-10] + "_events.tsv",
+                    "ieeg_file": eeg_path,
+                    "ieeg_electrodes_file": electrodes_file,
+                    "ieeg_channels_file": eeg_file_path[:-10] + "_channels.tsv",
+                }
+            )
         return all_sessions
 
-    def _load_electrical_stimulation(self):
-        events_file = self.session['events_file']
-        events_df = pd.read_csv(events_file, sep='\t')
-        events_df = events_df[events_df['trial_type'].str.upper().isin(['ELECTRICAL_STIMULATION'])]
+    def _load_electrical_stimulation(self) -> IrregularTimeSeries:
+        events_file = self.session["events_file"]
+        events_df = pd.read_csv(events_file, sep="\t")
+        events_df = events_df[
+            events_df["trial_type"].str.upper().isin(["ELECTRICAL_STIMULATION"])
+        ]
 
         return IrregularTimeSeries(
-            timestamps=events_df['onset'].values,
-            stimulation_site=events_df['electrical_stimulation_site'].str.upper().values.astype(str), # like 'VT1-VT2'
-            duration=events_df['duration'].values,
-            waveform_type=events_df['electrical_stimulation_type'].str.upper().values.astype(str), # all monophasic
-            current=events_df['electrical_stimulation_current'].values,
+            timestamps=events_df["onset"].to_numpy(),
+            stimulation_site=events_df["electrical_stimulation_site"]
+            .str.upper()
+            .values.astype(str),  # like 'VT1-VT2'
+            duration=events_df["duration"].values,
+            waveform_type=events_df["electrical_stimulation_type"]
+            .str.upper()
+            .values.astype(str),  # all monophasic
+            current=events_df["electrical_stimulation_current"],
             # frequency=events_df['electrical_stimulation_frequency'].values, # all 0.2 Hz; this is single-pulse stim so the frequency is not well defined here.
-            pulse_width=events_df['electrical_stimulation_pulsewidth'].values, # equal to duration since the pulses are monophasic
-            timekeys = ['timestamps'],
-            domain='auto'
+            pulse_width=events_df[
+                "electrical_stimulation_pulsewidth"
+            ].values,  # equal to duration since the pulses are monophasic
+            timekeys=["timestamps"],
+            domain="auto",
         )
+
+    def save_data(self, save_root_dir: str | Path) -> tuple:
+        path, data = super().save_data(save_root_dir)
+
+        session_length = data.ieeg.data.shape[0] / data.ieeg.sampling_rate
+        n_electrodes = data.ieeg.data.shape[1]
+        n_stim_events = data.electrical_stimulation.timestamps.shape[0]
+        print(
+            f"\t\tSession length: {session_length:.2f} seconds\t\t{n_electrodes} electrodes\t\t{n_stim_events} stimulation events"
+        )
+        return path, data
+
 
 if __name__ == "__main__":
     root_dir = "/home/zaho/orcd/pool/bfm_dataset/ccep/ds004080-1.2.2/"
     import dotenv
+
     dotenv.load_dotenv()
     save_root_dir = os.getenv("DATA_ROOT_DIR")
-    for subject_identifier in CCEPSession.discover_subjects(root_dir=root_dir):
-        for session in CCEPSession.discover_sessions(subject_identifier=subject_identifier, root_dir=root_dir):
-            session_identifier = session['session_identifier']
-            path = Path(save_root_dir) / CCEPSession.dataset_identifier / subject_identifier / session_identifier / "data.h5"
-            if path.exists():
-                print(f"Data already exists for subject {subject_identifier} and session {session_identifier}, skipping...")
-                continue
-            
-            session = CCEPSession(subject_identifier=subject_identifier, session_identifier=session_identifier, root_dir=root_dir, allow_corrupted=False)
-            path, data = session.save_data(save_root_dir=save_root_dir)
-            
-            print(f"Saved data for subject {subject_identifier} and session {session_identifier} to {path}")
+    if save_root_dir is None:
+        raise ValueError("DATA_ROOT_DIR environment variable not set.")
 
-            session_length = data.ieeg.data.shape[0] / data.ieeg.sampling_rate
-            n_electrodes = data.ieeg.data.shape[1]
-            n_stim_events = data.electrical_stimulation.timestamps.shape[0]
-            print(f"\t\tSession length: {session_length:.2f} seconds\t\t{n_electrodes} electrodes\t\t{n_stim_events} stimulation events")
+    CCEPSession.save_all_subjects_sessions(
+        root_dir=root_dir, save_root_dir=save_root_dir
+    )
