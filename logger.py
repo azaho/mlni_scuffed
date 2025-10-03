@@ -108,10 +108,19 @@ class TrainLossLogger(Callback):
 
             # Console logging
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            gpu_str = f"GPU: {mem['gpu_peak_allocated_gb']:.2f}G" if mem["has_gpu"] else "GPU: N/A"
+            gpu_str = (
+                f"GPU: {mem['gpu_peak_allocated_gb']:.2f}G"
+                if mem["has_gpu"]
+                else "GPU: N/A"
+            )
             header = f"[{timestamp} | {gpu_str} | RAM: {mem['ram_used_gb']:.1f}G]"
-            idle_str = f" | idle: {self.idle_time:.3f}s" if self.idle_time is not None else ""
-            self.logger.info(f"{header} Epoch {trainer.current_epoch} | Batch {batch_idx + 1:3d}/{total_batches} ({progress_pct:5.1f}%) | train_loss: {loss:.6f} | time: {elapsed:.3f}s{idle_str}")
+            idle_str = (
+                f" | idle: {self.idle_time:.3f}s" if self.idle_time is not None else ""
+            )
+            self.logger.info(
+                f"{header} Epoch {trainer.current_epoch} | Batch {batch_idx + 1:3d}/{total_batches} ({progress_pct:5.1f}%) | "
+                f"train_loss: {loss:.6f} | time: {elapsed:.3f}s{idle_str}"
+            )
 
             # Reset peak memory stats for next batch interval
             if torch.cuda.is_available():

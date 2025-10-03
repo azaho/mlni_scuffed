@@ -149,13 +149,28 @@ class SessionBase(ABC):
         for subject_identifier in cls.discover_subjects(root_dir=root_dir):
             for session in cls.discover_sessions(subject_identifier=subject_identifier, root_dir=root_dir):
                 session_identifier = session["session_identifier"]
+                if (Path(save_root_dir) / cls.dataset_identifier / subject_identifier / session_identifier / "data.h5").exists():
+                    print(f"Data for {cls.dataset_identifier}/{subject_identifier}/{session_identifier} already exists. Skipping.")
+                    continue
+
                 session = cls(
                     subject_identifier=subject_identifier,
                     session_identifier=session_identifier,
                     root_dir=root_dir,
                     allow_corrupted=False,
                 )
-                session.save_data(save_root_dir=save_root_dir)
+                path, data = session.save_data(save_root_dir=save_root_dir)
+                
+                session_length = data.ieeg.data.shape[0] / data.ieeg.sampling_rate
+                n_electrodes = data.ieeg.data.shape[1]
+                if "electrical_stimulation" in data.keys():
+                    n_stim_events = data.electrical_stimulation.timestamps.shape[0]
+                else:
+                    n_stim_events = 0
+                print(f"Saved data: {path}")
+                print(
+                    f"\t\tSession length: {session_length:.2f} seconds\t\t{n_electrodes} electrodes\t\t{n_stim_events} stimulation events"
+                )
 
     def _load_ieeg_electrodes(self, electrodes_file: str | Path, channels_file: str | Path):
         """
@@ -269,7 +284,7 @@ class BIDSSession(SessionBase):
         else:
             raw = read_raw_bids(ieeg_file, verbose=True)
 
-        raw = raw.pick(self.data_dict["channels"].id)
+        raw = raw.pick(self.data_dict["channels"].id.tolist())
 
         return RegularTimeSeries(
             data=raw.get_data().astype(np.float32).T * 1e6,  # shape should be (n_samples, n_channels), and convert to microvolts
