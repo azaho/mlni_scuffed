@@ -1,0 +1,30 @@
+# @package model
+_target_: lit_andrii0.iEEGTransformer
+
+# Model architecture
+name: "OM"  # Original Model
+context_length: 3.0  # seconds
+
+# Electrode embedding configuration
+electrode_embedding:
+  type: "learned"  # Options: learned, zero
+  dim: null  # Will be set to d_model if null
+
+# Signal preprocessing
+signal_preprocessing:
+  segment_length: 0.25  # seconds
+  p_overlap: 0.75
+  laplacian_rereference: true
+  normalize_voltage: false
+  spectrogram:
+    enabled: true
+    min_frequency: 0
+    max_frequency: 150
+    window: "hann"  # Options: hann, boxcar
+    remove_line_noise: true
+
+# Transformer configuration
+transformer:
+  d_model: 192
+  n_heads: 12
+  n_layers: 5

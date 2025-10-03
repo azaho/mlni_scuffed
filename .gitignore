@@ -1,0 +1,9 @@
+outputs/
+logs/
+checkpoints/
+
+session/precision*
+
+.venv/
+wandb/
+**/__pycache__/

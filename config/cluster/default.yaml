@@ -1,0 +1,19 @@
+# @package cluster
+# Weights & Biases configuration
+wandb_project: ""
+wandb_entity: ""
+
+# Model saving and evaluation
+save_model_every_n_epochs: 1
+
+# Data loading
+num_workers_dataloaders: 4
+prefetch_factor: 2
+
+# Training precision parameters
+dtype: "float32"  # Will be converted to torch.dtype
+use_mixed_precision: true
+amp_dtype: "bfloat16"  # Will be converted to torch.amp_dtype
+
+# Directory naming (will be set automatically)
+dir_name: null

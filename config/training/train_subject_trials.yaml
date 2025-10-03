@@ -1,0 +1,6 @@
+# Training subject trials configuration
+# Format: "dataset_identifier/subject_identifier/session_identifier[time_from:time_to]"
+- "vanblooijs_hermes_developmental_2023/sub-ccepAgeUMCU0*/*"
+- "vanblooijs_hermes_developmental_2023/sub-ccepAgeUMCU1*/*"
+- "braintreebank/*/*"
+# - "*/*/*"

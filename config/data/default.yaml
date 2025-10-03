@@ -1,0 +1,4 @@
+# @package data
+# Data loading and preprocessing settings
+data_path: "data/"
+cache_dir: "cache/"

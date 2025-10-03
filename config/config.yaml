@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - model: default
+  - training: default
+  - cluster: default
+  - data: default
+  - _self_
+
+# Global settings
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d_%H-%M-%S}
+  job:
+    name: ${training.setup_name}
+
+# Override any settings here if needed
+# For example:
+# model:
+#   transformer:
+#     d_model: 256

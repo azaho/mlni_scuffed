@@ -1,0 +1,33 @@
+
+# dev
+ipykernel
+jupyter
+matplotlib
+seaborn
+scipy
+
+# data
+h5py
+numpy
+pandas
+mne
+tqdm
+mne_bids
+temporaldata
+
+# training core
+temporaldata
+torch
+torchvision
+torchaudio
+lightning
+transformers
+hydra-core
+
+# interface example
+wandb
+python-dotenv
+
+# idk
+scikit-learn
+psutil

@@ -1,0 +1,37 @@
+# @package training
+setup_name: "andrii0"  # Required
+
+# Data configuration
+# Training subject trials are defined in train_subject_trials.yaml
+train_subject_trials_file: "config/training/train_subject_trials.yaml"
+data_dtype: "bfloat16"  # Will be converted to torch.dtype
+eval_tasks: ""  # Comma-separated neuroprobe tasks
+
+# Training parameters
+n_epochs: 100
+p_test: 0.1
+
+# Optimizer settings
+optimizer: "Muon"
+batch_size: 100
+learning_rate: 0.003
+lr_schedule: "linear"  # Options: none, linear, cosine
+lr_warmup_steps: 100
+lr_warmup_fraction: 0.1
+weight_decay: 0.0
+dropout: 0.1
+
+# Model training specifics
+max_n_electrodes: 96
+p_electrodes_per_stream: 0.5
+future_bin_idx: 1
+
+# Feature processing
+normalize_features: true
+use_temperature_param: true
+max_temperature_param: 1000.0
+
+# Reproducibility
+random_string: "X"  # For seed generation
+random_seed: null  # Will be set from random_string hash
+timestamp: null  # Will be set automatically
