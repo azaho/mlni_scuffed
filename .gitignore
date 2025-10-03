@@ -7,3 +7,5 @@ session/precision*
 .venv/
 wandb/
 **/__pycache__/
+
+.env
