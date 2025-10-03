@@ -118,11 +118,11 @@ class TrainLossLogger(Callback):
             # Console logging
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             gpu_str = (
-                f"GPU: {mem['gpu_peak_allocated_gb']:.2f}G"
+                f"{mem['gpu_peak_allocated_gb']:.2f}G"
                 if mem["has_gpu"]
-                else "GPU: N/A"
+                else "N/A"
             )
-            header = f"[{timestamp} | {gpu_str} | RAM: {mem['ram_used_gb']:.1f}G]"
+            header = f"GPU: {gpu_str} | RAM: {mem['ram_used_gb']:.1f}G | "
             idle_str = (
                 f" | idle: {self.idle_time:.3f}s" if self.idle_time is not None else ""
             )
