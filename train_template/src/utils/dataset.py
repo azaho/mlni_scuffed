@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class SingleSessionDataset(Dataset):
-    def __init__(self, session_string, context_length):
+    def __init__(self, session_string: str, context_length: float):
         """
         Initialize the SingleSessionDataset with session details and context length.
 

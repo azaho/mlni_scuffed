@@ -13,12 +13,12 @@ from pytorch_lightning.callbacks import (
 )
 from pytorch_lightning.loggers import CSVLogger, WandbLogger
 
-from dataset import iEEGDataModule
-from logger import TrainLossLogger
 from model.mse_ar import iEEGTransformer
+from utils.dataset import iEEGDataModule
+from utils.logger import TrainLossLogger
 
 
-@hydra.main(version_base=None, config_path="config", config_name="config")
+@hydra.main(version_base="1.3", config_path="../configs", config_name="config")
 def main(cfg: DictConfig):
     logger = logging.getLogger(__name__)
     hydra_wd = HydraConfig.get().runtime.output_dir

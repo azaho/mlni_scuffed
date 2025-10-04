@@ -8,6 +8,10 @@ session/precision*
 wandb/
 **/__pycache__/
 
+*.egg-info/
+.*_cache/
+dist/
+
 .env
 
 uv.lock

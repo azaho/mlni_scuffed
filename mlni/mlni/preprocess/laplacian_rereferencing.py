@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 import torch
 
@@ -51,10 +53,8 @@ def get_all_laplacian_electrodes(electrode_labels: list[str]) -> tuple[list[str]
     stems = list(label_to_stem.values())
 
     # Create reverse mapping: stem -> list of original labels with that stem
-    stem_to_labels = {}
+    stem_to_labels = defaultdict(list)
     for label, stem in label_to_stem.items():
-        if stem not in stem_to_labels:
-            stem_to_labels[stem] = []
         stem_to_labels[stem].append(label)
 
     # Find laplacian electrodes (those with neighbors)
@@ -158,24 +158,24 @@ def laplacian_rereference_batch(batch: dict, remove_non_laplacian: bool = True, 
     return batch
 
 
-if __name__ == "__main__":
-    # Test with SingleSessionDataset
-    from dataset import SingleSessionDataset
+# if __name__ == "__main__":
+#     # Test with SingleSessionDataset
+#     from dataset import SingleSessionDataset
 
-    dataset = SingleSessionDataset(
-        "vanblooijs_hermes_developmental_2023/sub-ccepAgeUMCU01/ses-1_task-SPESclin_run-021448",
-        context_length=1.0,
-    )
-    sample = dataset[0]
+#     dataset = SingleSessionDataset(
+#         "vanblooijs_hermes_developmental_2023/sub-ccepAgeUMCU01/ses-1_task-SPESclin_run-021448",
+#         context_length=1.0,
+#     )
+#     sample = dataset[0]
 
-    print(f"Original data shape: {sample['ieeg']['data'].shape}", sample["ieeg"]["data"])
-    print(f"Original channel labels (length: {len(sample['channels']['id'])}): {sample['channels']['id']}")
+#     print(f"Original data shape: {sample['ieeg']['data'].shape}", sample["ieeg"]["data"])
+#     print(f"Original channel labels (length: {len(sample['channels']['id'])}): {sample['channels']['id']}")
 
-    # Apply laplacian rereferencing
-    rereferenced_sample = laplacian_rereference_batch(sample, inplace=True)
+#     # Apply laplacian rereferencing
+#     rereferenced_sample = laplacian_rereference_batch(sample, inplace=True)
 
-    print(
-        f"\nRereferenced data shape: {rereferenced_sample['ieeg']['data'].shape}",
-        rereferenced_sample["ieeg"]["data"],
-    )
-    print(f"Rereferenced channel labels (length: {len(rereferenced_sample['channels']['id'])}): {rereferenced_sample['channels']['id']}")
+#     print(
+#         f"\nRereferenced data shape: {rereferenced_sample['ieeg']['data'].shape}",
+#         rereferenced_sample["ieeg"]["data"],
+#     )
+#     print(f"Rereferenced channel labels (length: {len(rereferenced_sample['channels']['id'])}): {rereferenced_sample['channels']['id']}")
