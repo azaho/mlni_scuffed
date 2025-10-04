@@ -1,3 +1,8 @@
+# Neural Conversion Library for Standardized Data
+
+This repository provides tools for converting various neural data formats into a standardized `temporaldata` format. The goal is to facilitate data sharing, analysis, and interoperability across different research groups and studies.
+
+## Data Format
 
 ```python
 session = Data(

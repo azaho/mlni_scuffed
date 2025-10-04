@@ -243,7 +243,7 @@ class BIDSSession(SessionBase):
         assert "participant_id" in participants_df.columns, "participants.tsv found but no 'participant_id' column present"
         return participants_df["participant_id"].to_list()
 
-    def _load_ieeg_electrodes(self, electrodes_file: str | Path, channels_file: str | Path):
+    def _load_ieeg_electrodes(self, electrodes_file: str | Path, channels_file: str | Path) -> ArrayDict:
         electrodes_df = pd.read_csv(electrodes_file, sep="\t")
         channels_df = pd.read_csv(channels_file, sep="\t")
 
@@ -282,7 +282,7 @@ class BIDSSession(SessionBase):
         else:
             raw = read_raw_bids(ieeg_file, verbose=True)
 
-        raw = raw.pick(self.data_dict["channels"].id.tolist())
+        raw = raw.pick(self.data_dict["channels"].id.tolist())  # type: ignore[attr-defined]
 
         return RegularTimeSeries(
             data=raw.get_data().astype(np.float32).T * 1e6,  # shape should be (n_samples, n_channels), and convert to microvolts

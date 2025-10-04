@@ -4,10 +4,9 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from mlni.preprocess.spectrogram import SpectrogramPreprocessor
 from omegaconf import DictConfig
 from transformers import LlamaConfig, LlamaModel
-
-from preprocess.spectrogram import SpectrogramPreprocessor
 
 
 class iEEGTransformer(pl.LightningModule):
@@ -16,7 +15,15 @@ class iEEGTransformer(pl.LightningModule):
         self.cfg = cfg
         self.save_hyperparameters()
 
-        self.spectrogram_preprocessor = SpectrogramPreprocessor(cfg)
+        self.spectrogram_preprocessor = SpectrogramPreprocessor(
+            segment_length=cfg.model.signal_preprocessing.segment_length,
+            p_overlap=cfg.model.signal_preprocessing.p_overlap,
+            min_frequency=cfg.model.signal_preprocessing.spectrogram.min_frequency,
+            max_frequency=cfg.model.signal_preprocessing.spectrogram.max_frequency,
+            window=cfg.model.signal_preprocessing.spectrogram.window,
+            remove_line_noise=cfg.model.signal_preprocessing.spectrogram.remove_line_noise,
+        )
+
         self.signal_projection = nn.Linear(self.spectrogram_preprocessor.n_freqs, cfg.model.transformer.d_model)
 
         max_position_embeddings = math.ceil(cfg.model.context_length / cfg.model.signal_preprocessing.segment_length / (1 - cfg.model.signal_preprocessing.p_overlap))

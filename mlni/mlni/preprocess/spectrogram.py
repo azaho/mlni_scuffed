@@ -1,23 +1,34 @@
+from typing import Literal
+
 import torch
 import torch.nn as nn
-from omegaconf import DictConfig
 
 
 class SpectrogramPreprocessor(nn.Module):
-    def __init__(self, cfg: DictConfig, output_dim: int = -1):
+    def __init__(self, segment_length: float, p_overlap: float, *, min_frequency: float, max_frequency: float, window: Literal["hann", "boxcar"], remove_line_noise: bool, output_dim: int = -1):
         """
         Initialize the SpectrogramPreprocessor with configuration details.
 
         Args:
-            cfg: A Hydra config object containing spectrogram parameters and other settings.
-            output_dim: The dimension of the output features. If -1, the output feature dimension will be the same as the number of frequency bins. Otherwise, they will be projected to this dimension.
+            segment_length (float): The length of each segment (in seconds) for the STFT.
+            p_overlap (float): The proportion of overlap between segments (between 0 and 1).
+            *,
+            min_frequency (float): The minimum frequency (in Hz) to include in the spectrogram.
+            max_frequency (float): The maximum frequency (in Hz) to include in the spectrogram.
+            window (Literal["hann", "boxcar"]): The type of window to use for the STFT.
+            remove_line_noise (bool): Whether to remove line noise frequencies (e.g., 50/60 Hz).
+            output_dim (int, default=-1): The dimension of the output features. If -1, the output feature dimension will be the same as the number of frequency bins. Otherwise, they will be projected to this dimension.
         """
         super().__init__()
-        self.cfg = cfg
+        self.segment_length = segment_length
+        self.p_overlap = p_overlap
+
+        self.min_frequency = min_frequency
+        self.max_frequency = max_frequency
+        self.window = window
+        self.remove_line_noise = remove_line_noise
+
         self.output_dim = output_dim
-        self.spectrogram_parameters = cfg.model.signal_preprocessing.spectrogram
-        self.segment_length = cfg.model.signal_preprocessing.segment_length
-        self.p_overlap = cfg.model.signal_preprocessing.p_overlap
 
         # from https://docs.pytorch.org/docs/stable/generated/torch.fft.rfftfreq.html
         # if n is nperseg, and d is 1/sampling_rate, then f = torch.arange((n + 1) // 2) / (d * n)
@@ -25,47 +36,20 @@ class SpectrogramPreprocessor(nn.Module):
         # note: n = sampling_rate * tperseg, so it simplifies to torch.arange(sampling_rate * tperseg / 2) / tperseg
         #    which is a list that goes from 0 to sampling_rate / 2 in increments of sampling_rate / nperseg = 1 / tperseg
         # so max frequency bin is max_frequency * tperseg + 1 (adding one to make the endpoint inclusive)
-        self.max_frequency_bin = round(self.spectrogram_parameters.max_frequency * self.segment_length + 1)
-        self.min_frequency_bin = round(self.spectrogram_parameters.min_frequency * self.segment_length)
+        self.max_frequency_bin = round(self.max_frequency * self.segment_length + 1)
+        self.min_frequency_bin = round(self.min_frequency * self.segment_length)
         self.n_freqs = self.max_frequency_bin - self.min_frequency_bin
 
         # Transform FFT output to match expected output dimension
         self.output_transform = nn.Identity() if self.output_dim == -1 else nn.Linear(self.n_freqs, self.output_dim)
 
-        if self.spectrogram_parameters.remove_line_noise:
+        if self.remove_line_noise:
             example_sampling_rate = 2048
             nperseg = round(self.segment_length * example_sampling_rate)
             freq_bins = torch.fft.rfftfreq(nperseg, d=1.0 / example_sampling_rate)[self.min_frequency_bin : self.max_frequency_bin]  # Calculate frequency bins (in Hz)
-            self.line_noise_mask = self.compute_line_noise_mask(freq_bins=freq_bins, line_noise_freqs=[50, 60], margin=2.0)
+            self.line_noise_mask = self._compute_line_noise_mask(freq_bins=freq_bins, line_noise_freqs=[50, 60], margin=2.0)
         else:
             self.line_noise_mask = None
-
-    def compute_line_noise_mask(
-        self,
-        freq_bins: torch.Tensor,
-        line_noise_freqs: list | None = None,
-        margin: float = 2.0,
-    ) -> torch.Tensor:
-        """Compute a mask for line noise frequencies in the spectrogram.
-
-        Args:
-            freq_bins (torch.Tensor): The frequency bins of the spectrogram.
-            line_noise_freqs (list, optional): The line noise frequencies to mask. Defaults to [50, 60].
-            margin (float, optional): The margin around the line noise frequencies to include in the mask. Defaults to 2.0.
-
-        Returns:
-            torch.Tensor: A boolean mask indicating the line noise frequencies.
-        """
-        # 60 Hz and its harmonics
-        line_noise_mask = torch.zeros(freq_bins.shape[0], device=freq_bins.device, dtype=torch.bool)
-
-        if line_noise_freqs is None:
-            line_noise_freqs = [50, 60]
-
-        for freq in line_noise_freqs:
-            line_noise_mask |= torch.abs(freq_bins - freq) <= margin
-
-        return line_noise_mask
 
     def forward(self, batch: dict, z_score: bool = True) -> torch.Tensor:
         """
@@ -96,7 +80,7 @@ class SpectrogramPreprocessor(nn.Module):
         window = {
             "hann": torch.hann_window,
             "boxcar": torch.ones,
-        }[self.spectrogram_parameters.window](nperseg, device=x.device)
+        }[self.window](nperseg, device=x.device)
 
         # Compute STFT
         x = torch.stft(
@@ -149,3 +133,30 @@ class SpectrogramPreprocessor(nn.Module):
 
         x = x.to(dtype=batch["ieeg"]["data"].dtype)
         return x
+
+    def _compute_line_noise_mask(
+        self,
+        freq_bins: torch.Tensor,
+        line_noise_freqs: list | None = None,
+        margin: float = 2.0,
+    ) -> torch.Tensor:
+        """Compute a mask for line noise frequencies in the spectrogram.
+
+        Args:
+            freq_bins (torch.Tensor): The frequency bins of the spectrogram.
+            line_noise_freqs (list, optional): The line noise frequencies to mask. If none, defaults to [50, 60].
+            margin (float, optional): The margin around the line noise frequencies to include in the mask. Defaults to 2.0.
+
+        Returns:
+            torch.Tensor: A boolean mask indicating the line noise frequencies.
+        """
+        # 60 Hz and its harmonics
+        line_noise_mask = torch.zeros(freq_bins.shape[0], device=freq_bins.device, dtype=torch.bool)
+
+        if line_noise_freqs is None:
+            line_noise_freqs = [50, 60]
+
+        for freq in line_noise_freqs:
+            line_noise_mask |= torch.abs(freq_bins - freq) <= margin
+
+        return line_noise_mask

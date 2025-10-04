@@ -45,9 +45,9 @@ class CCEPSession(BIDSSession):
         runs = [str(eeg_file).split(subject_identifier)[-1][1:-9].split("run-")[-1] for eeg_file in eeg_files]  #
 
         # Find the electrodes file
-        electrodes_file = list(session_subdir.glob("*electrodes.tsv"))
-        assert len(electrodes_file) == 1, f"Expected 1 electrodes file, found {len(electrodes_file)}: {electrodes_file}"
-        electrodes_file = str(electrodes_file[0])
+        electrodes_files = list(session_subdir.glob("*electrodes.tsv"))
+        assert len(electrodes_files) == 1, f"Expected 1 electrodes file, found {len(electrodes_files)}: {electrodes_files}"
+        electrodes_file = str(electrodes_files[0])
 
         # Add all runs (sessions) to the all_sessions list
         all_sessions = []

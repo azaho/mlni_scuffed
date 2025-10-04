@@ -117,7 +117,7 @@ class BrainTreebankSession(BIDSSession):
         loc_file = os.path.join(self.root_dir, f"localization/{self.subject_identifier}/depth-wm.csv")  # TODO: make this a parameter in the session constructor
         df = pd.read_csv(loc_file)
         df["Electrode"] = df["Electrode"].apply(self.__clean_electrode_label)
-        coordinates = np.zeros((len(electrode_labels), 3), dtype=np.float32)
+        coordinates: np.ndarray = np.zeros((len(electrode_labels), 3), dtype=np.float32)
         for label_idx, label in enumerate(electrode_labels):
             row = df[df["Electrode"] == label].iloc[0]
             # Convert coordinates from subject (LPI) to MNI (RAS) space. NOTE: this is not the same as the MNI space used in the BIDS specification. Awaiting proper MNI coordinates from braintreebank.
@@ -147,7 +147,7 @@ class BrainTreebankSession(BIDSSession):
             # Get data length first
             electrode_data_length = f["data"][h5_neural_data_keys[self._non_filtered_electrode_labels[0]]].shape[0]
 
-            electrode_labels = self.data_dict["channels"].id
+            electrode_labels = self.data_dict["channels"].id  # type: ignore[attr-defined]
             # Pre-allocate tensor with specific dtype
             neural_data_cache = np.zeros((len(electrode_labels), electrode_data_length), dtype=np.float32)
             # Load data
