@@ -22,7 +22,7 @@ class SessionBase(ABC):
     dataset_identifier: ClassVar[str]  
     name: ClassVar[str]  
     url: ClassVar[str]  # If None, it will be assumed that the dataset is private
-    citation: ClassVar[str]  # If None, it will be assumed that the dataset is private
+    citation: ClassVar[str]  # In BibTex format. If None, it will be assumed that the dataset is private. This can be multiple citations, separated by a newline.
 
     def __init__(
         self,
