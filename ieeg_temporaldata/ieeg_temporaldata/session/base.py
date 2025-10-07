@@ -49,6 +49,13 @@ class SessionBase(ABC):
         self.allow_corrupted = allow_corrupted
 
         self.data_dict = {
+            "brainset": BrainsetDescription(
+                id=self.dataset_identifier,
+                origin_version=self.dataset_version,
+                derived_version=self.dataset_version,
+                source=self.url,
+                description=self.name,
+            ),
             "subject": SubjectDescription(
                 id=self.subject_identifier,
                 species=Species.HUMAN,
@@ -56,13 +63,6 @@ class SessionBase(ABC):
             "session": SessionDescription(
                 id=self.session_identifier,
                 recording_date=datetime.datetime.min, # TODO: add recording date somehow from the data
-            ),
-            "brainset": BrainsetDescription(
-                id=self.dataset_identifier,
-                origin_version=self.dataset_version,
-                derived_version=self.dataset_version,
-                source=self.url,
-                description=self.name,
             ),
             "allow_corrupted": self.allow_corrupted,
             "citation": self.citation,
