@@ -14,8 +14,8 @@ import pandas as pd
 from mne_bids import read_raw_bids
 from temporaldata import ArrayDict, Data, RegularTimeSeries
 
-from brainsets.descriptions import SubjectDescription, SessionDescription, BrainsetDescription
-from brainsets.taxonomy import Species
+from brainsets.descriptions import SubjectDescription, SessionDescription, BrainsetDescription, DeviceDescription
+from brainsets.taxonomy import Species, RecordingTech
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +63,10 @@ class SessionBase(ABC):
             "session": SessionDescription(
                 id=self.session_identifier,
                 recording_date=datetime.datetime.min, # TODO: add recording date somehow from the data
+            ),
+            "device": DeviceDescription(
+                id="iEEG/EEG",
+                recording_tech=RecordingTech.ECOG_ARRAY_ECOGS,
             ),
             "allow_corrupted": self.allow_corrupted,
             "citation": self.citation,
