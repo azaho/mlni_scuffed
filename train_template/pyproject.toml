@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "Template to quickly get started with training a brain foundation model"
 readme = "README.md"
 authors = [
-    { name = "Andrii Zahorodnii", email = "zaho@mit.edu" }
+    { name = "Andrii Zahorodnii" },
+    { name = "Alexander Brady" }
 ]
 requires-python = ">=3.11"
 dependencies = [

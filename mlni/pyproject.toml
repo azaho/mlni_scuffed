@@ -3,7 +3,8 @@ name = "mlni"
 version = "0.1.0"
 description = "Machine learning components for neural interfaces"
 authors = [
-    { name = "Andrii Zahorodnii", email = "zaho@mit.edu" }
+    { name = "Andrii Zahorodnii" },
+    { name = "Alexander Brady" }
 ]
 readme = "README.md"
 requires-python = ">=3.13"
