@@ -12,6 +12,9 @@ from torch.utils.data import DataLoader
 from mlni.dataset.multi_session import MultiSessionDataset
 from mlni.dataset.sampler import SessionBatchSampler
 
+from mlni.dataset.preprocessing import laplacian_rereference_batch, electrode_subset_batch
+
+
 logger = logging.getLogger(__name__)
 
 def ieeg_collate_fn(batch: list, cfg: DictConfig | None = None) -> dict:
