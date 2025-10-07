@@ -11,7 +11,6 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import yaml
-from omegaconf import DictConfig
 from temporaldata import Data
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 
