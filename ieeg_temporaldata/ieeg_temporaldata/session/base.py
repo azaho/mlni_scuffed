@@ -1,5 +1,6 @@
 import logging
 import os
+import datetime
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -11,18 +12,21 @@ import pandas as pd
 from mne_bids import read_raw_bids
 from temporaldata import ArrayDict, Data, RegularTimeSeries
 
-logger = logging.getLogger(__name__)
+from brainsets.descriptions import SubjectDescription, SessionDescription, BrainsetDescription
+from brainsets.taxonomy import Species
 
+logger = logging.getLogger(__name__)
 
 class SessionBase(ABC):
     """
-    This class is used to load the iEEG neural data for a given session from the OpenNeuro BIDS dataset file format as used in OpenNeuro. The dataset is assumed to be stored in the root_dir directory.
+    This class is an interface used to load the iEEG neural data for a given session. The dataset is assumed to be stored in the root_dir directory. This class must be used as a parent class for all session classes.
     """
     # NOTE: Every subclass must define these variables
     dataset_identifier: ClassVar[str]  # Follow the brainsets convention for naming: firstAuthorLastName_lastAuthorLastName_firstWordOfPublicationTitle_publicationYear (all lowercase letters)
+    dataset_version: ClassVar[str]  # Version of the dataset.
     name: ClassVar[str]  
-    url: ClassVar[str]  # If None, it will be assumed that the dataset is private
-    citation: ClassVar[str]  # In BibTex format. If None, it will be assumed that the dataset is private. This can be multiple citations, separated by a newline.
+    url: ClassVar[str]  # If empty, it will be assumed that the dataset is private
+    citation: ClassVar[str]  # In BibTex format. If empty, it will be assumed that the dataset is private. This can be multiple citations, separated by a newline.
 
     def __init__(
         self,
@@ -43,10 +47,23 @@ class SessionBase(ABC):
         self.allow_corrupted = allow_corrupted
 
         self.data_dict = {
-            "subject": self.subject_identifier,
-            "session": self.session_identifier,
-            "brainset": self.dataset_identifier,
+            "subject": SubjectDescription(
+                id=self.subject_identifier,
+                species=Species.HUMAN,
+            ),
+            "session": SessionDescription(
+                id=self.session_identifier,
+                recording_date=datetime.datetime.min, # TODO: add recording date somehow from the data
+            ),
+            "brainset": BrainsetDescription(
+                id=self.dataset_identifier,
+                origin_version=self.dataset_version,
+                derived_version=self.dataset_version,
+                source=self.url,
+                description=self.name,
+            ),
             "allow_corrupted": self.allow_corrupted,
+            "citation": self.citation,
         }
 
         # Discover subjects and ensure the subject identifier exists in the dataset
