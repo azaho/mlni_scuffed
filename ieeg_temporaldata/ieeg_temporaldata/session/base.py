@@ -1,3 +1,5 @@
+from __future__ import annotations  # allow compatibility for Python 3.9
+
 import logging
 import os
 import datetime
