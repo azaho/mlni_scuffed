@@ -18,8 +18,11 @@ class SessionBase(ABC):
     """
     This class is used to load the iEEG neural data for a given session from the OpenNeuro BIDS dataset file format as used in OpenNeuro. The dataset is assumed to be stored in the root_dir directory.
     """
-
-    dataset_identifier: ClassVar[str]  # NOTE: Every subclass must define this variable
+    # NOTE: Every subclass must define these variables
+    dataset_identifier: ClassVar[str]  
+    name: ClassVar[str]  
+    url: ClassVar[str]  # If None, it will be assumed that the dataset is private
+    citation: ClassVar[str]  # If None, it will be assumed that the dataset is private
 
     def __init__(
         self,

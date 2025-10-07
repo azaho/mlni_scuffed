@@ -9,11 +9,16 @@ from .base import BIDSSession
 
 
 class CCEPSession(BIDSSession):
-    """
-    This class is used to load the iEEG neural data for a given session from the CCEP OpenNeuro dataset.
-    """
-
+    name = "CCEP"
     dataset_identifier = "vanblooijs_hermes_developmental_2023"
+    url = "https://openneuro.org/datasets/ds004080/versions/1.2.4"
+    citation = """@dataset{ds004080:1.2.4,
+  author = {D. van Blooijs AND M.A. van den Boom AND J.F. van der Aar AND G.J.M. Huiskamp AND G. Castegnaro AND M. Demuru AND W.J.E.M. Zweiphenning AND P. van Eijsden AND K. J. Miller AND F.S.S. Leijten AND D. Hermes},
+  title = {"CCEP ECoG dataset across age 4-51"},
+  year = {2023},
+  doi = {doi:10.18112/openneuro.ds004080.v1.2.4},
+  publisher = {OpenNeuro}
+}"""
 
     def __init__(
         self,

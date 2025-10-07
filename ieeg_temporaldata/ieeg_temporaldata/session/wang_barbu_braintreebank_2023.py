@@ -17,8 +17,18 @@ class BrainTreebankSession(BIDSSession):
     """
     This class is used to load the iEEG neural data for a given session from the BrainTreebank dataset at https://braintreebank.dev/
     """
-
-    dataset_identifier = "braintreebank"
+    name = "BrainTreebank"
+    dataset_identifier = "wang_barbu_braintreebank_2023"
+    url = "https://braintreebank.dev/"
+    citation = """@misc{wang2024braintreebanklargescaleintracranial,
+      title={Brain Treebank: Large-scale intracranial recordings from naturalistic language stimuli}, 
+      author={Christopher Wang and Adam Uri Yaari and Aaditya K Singh and Vighnesh Subramaniam and Dana Rosenfarb and Jan DeWitt and Pranav Misra and Joseph R. Madsen and Scellig Stone and Gabriel Kreiman and Boris Katz and Ignacio Cases and Andrei Barbu},
+      year={2024},
+      eprint={2411.08343},
+      archivePrefix={arXiv},
+      primaryClass={q-bio.NC},
+      url={https://arxiv.org/abs/2411.08343}, 
+}"""
 
     def __init__(
         self,
