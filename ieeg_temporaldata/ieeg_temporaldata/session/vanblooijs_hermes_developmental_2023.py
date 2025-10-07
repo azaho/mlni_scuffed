@@ -13,6 +13,7 @@ from .base import BIDSSession
 class CCEPSession(BIDSSession):
     name = "CCEP"
     dataset_identifier = "vanblooijs_hermes_developmental_2023"
+    dataset_version = "1.2.4"
     url = "https://openneuro.org/datasets/ds004080/versions/1.2.4"
     citation = """@dataset{ds004080:1.2.4,
   author = {D. van Blooijs AND M.A. van den Boom AND J.F. van der Aar AND G.J.M. Huiskamp AND G. Castegnaro AND M. Demuru AND W.J.E.M. Zweiphenning AND P. van Eijsden AND K. J. Miller AND F.S.S. Leijten AND D. Hermes},

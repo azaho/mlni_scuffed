@@ -22,6 +22,7 @@ class BrainTreebankSession(BIDSSession):
     name = "BrainTreebank"
     dataset_identifier = "wang_barbu_braintreebank_2023"
     url = "https://braintreebank.dev/"
+    dataset_version = "1.0.0"
     citation = """@misc{wang2024braintreebanklargescaleintracranial,
       title={Brain Treebank: Large-scale intracranial recordings from naturalistic language stimuli}, 
       author={Christopher Wang and Adam Uri Yaari and Aaditya K Singh and Vighnesh Subramaniam and Dana Rosenfarb and Jan DeWitt and Pranav Misra and Joseph R. Madsen and Scellig Stone and Gabriel Kreiman and Boris Katz and Ignacio Cases and Andrei Barbu},
