@@ -1,21 +1,10 @@
-import logging
 import os
-import random
 from fnmatch import fnmatch
-from functools import partial
 from pathlib import Path
-from typing import Literal
 
-import h5py
-import numpy as np
-import pytorch_lightning as pl
-import torch
-import yaml
-from temporaldata import Data
-from torch.utils.data import ConcatDataset, DataLoader, Dataset
+from torch.utils.data import ConcatDataset
 
 from .single_session import SingleSessionDataset
-from .sampler import SessionBatchSampler
 
 
 class MultiSessionDataset(ConcatDataset):
