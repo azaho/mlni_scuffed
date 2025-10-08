@@ -6,6 +6,7 @@ from datetime import datetime
 
 import psutil
 import torch
+from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 
 
@@ -52,7 +53,7 @@ class TrainLossLogger(Callback):
             "has_gpu": False,
         }
 
-    def on_train_epoch_start(self, trainer, pl_module):
+    def on_train_epoch_start(self, trainer: Trainer, pl_module: LightningModule):
         self.epoch_start_time = time.time()
         self.batch_end_time = None  # Reset for new epoch
         # Reset peak memory stats at start of epoch
@@ -62,7 +63,7 @@ class TrainLossLogger(Callback):
         gpu_str = f" | GPU: {mem['gpu_allocated_gb']:.1f}GB allocated, {mem['gpu_reserved_gb']:.1f}GB reserved" if mem["has_gpu"] else ""
         self.logger.info("=" * 80 + f"\nEpoch {trainer.current_epoch}/{trainer.max_epochs - 1} started\n" + f"RAM: {mem['ram_used_gb']:.1f}/{mem['ram_total_gb']:.1f}GB ({mem['ram_percent']:.1f}%){gpu_str}\n" + "=" * 80)
 
-    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
+    def on_train_batch_start(self, trainer: Trainer, pl_module: LightningModule, batch: dict, batch_idx: int):
         self.batch_start_time = time.time()
         # Calculate idle time (gap between previous batch end and current batch start)
         if self.batch_end_time is not None:
@@ -70,7 +71,7 @@ class TrainLossLogger(Callback):
         else:
             self.idle_time = None  # First batch has no idle time
 
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+    def on_train_batch_end(self, trainer: Trainer, pl_module: LightningModule, outputs: dict, batch: dict, batch_idx: int):
         if outputs is not None and "loss" in outputs:
             loss, elapsed = outputs["loss"].item(), time.time() - self.batch_start_time
             batch_size, total_batches = (
@@ -122,7 +123,7 @@ class TrainLossLogger(Callback):
             # Save batch end time for next idle time calculation
             self.batch_end_time = time.time()
 
-    def on_train_epoch_end(self, trainer, pl_module):
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule):
         elapsed, mem = time.time() - self.epoch_start_time, self._get_memory_usage()
         pl_module.log(
             "epoch_time",

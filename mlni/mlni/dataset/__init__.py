@@ -5,5 +5,5 @@ from .single_session import SingleSessionDataset
 __all__ = [
     "SessionBatchSampler",
     "MultiSessionDataset",
-    "SingleSessionDataset", 
+    "SingleSessionDataset",
 ]
