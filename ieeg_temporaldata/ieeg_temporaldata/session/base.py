@@ -1,8 +1,8 @@
 from __future__ import annotations  # allow compatibility for Python 3.9
 
+import datetime
 import logging
 import os
-import datetime
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -11,24 +11,25 @@ from typing import ClassVar
 import h5py
 import numpy as np
 import pandas as pd
+from brainsets.descriptions import BrainsetDescription, DeviceDescription, SessionDescription, SubjectDescription
+from brainsets.taxonomy import RecordingTech, Species
 from mne_bids import read_raw_bids
 from temporaldata import ArrayDict, Data, RegularTimeSeries
 
-from brainsets.descriptions import SubjectDescription, SessionDescription, BrainsetDescription, DeviceDescription
-from brainsets.taxonomy import Species, RecordingTech
-
 logger = logging.getLogger(__name__)
+
 
 class SessionBase(ABC):
     """
     This class is an interface used to load the iEEG neural data for a given session. The dataset is assumed to be stored in the root_dir directory. This class must be used as a parent class for all session classes.
     """
+
     # NOTE: Every subclass must define these variables
     dataset_identifier: ClassVar[str]  # Follow the brainsets convention for naming: firstAuthorLastName_lastAuthorLastName_firstWordOfPublicationTitle_publicationYear (all lowercase letters)
     dataset_version: ClassVar[str]  # Version of the dataset.
-    name: ClassVar[str]  
-    url: ClassVar[str]  # If empty, it will be assumed that the dataset is private
-    citation: ClassVar[str]  # In BibTex format. If empty, it will be assumed that the dataset is private. This can be multiple citations, separated by a newline.
+    name: ClassVar[str]
+    url: ClassVar[str | None]  # If empty, it will be assumed that the dataset is private
+    citation: ClassVar[str | None]  # In BibTex format. If empty, it will be assumed that the dataset is private. This can be multiple citations, separated by a newline.
 
     def __init__(
         self,
@@ -62,7 +63,7 @@ class SessionBase(ABC):
             ),
             "session": SessionDescription(
                 id=self.session_identifier,
-                recording_date=datetime.datetime.min, # TODO: add recording date somehow from the data
+                recording_date=datetime.datetime.min,  # TODO: add recording date somehow from the data
             ),
             "device": DeviceDescription(
                 id="iEEG/EEG",

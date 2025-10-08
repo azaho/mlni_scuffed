@@ -4,9 +4,10 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from mlni.preprocess.spectrogram import SpectrogramPreprocessor
 from omegaconf import DictConfig
 from transformers import LlamaConfig, LlamaModel
+
+from mlni.preprocess.spectrogram import SpectrogramPreprocessor
 
 
 class iEEGTransformer(pl.LightningModule):

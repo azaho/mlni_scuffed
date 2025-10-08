@@ -19,6 +19,7 @@ class BrainTreebankSession(BIDSSession):
     """
     This class is used to load the iEEG neural data for a given session from the BrainTreebank dataset at https://braintreebank.dev/
     """
+
     name = "BrainTreebank"
     dataset_identifier = "wang_barbu_braintreebank_2023"
     url = "https://braintreebank.dev/"

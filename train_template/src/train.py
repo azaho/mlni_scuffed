@@ -13,9 +13,9 @@ from pytorch_lightning.callbacks import (
 )
 from pytorch_lightning.loggers import CSVLogger, WandbLogger
 
+from model.mse_ar import iEEGTransformer
 from utils.dataset import iEEGDataModule
 from utils.logger import TrainLossLogger
-from model.mse_ar import iEEGTransformer
 
 
 @hydra.main(version_base="1.3", config_path="../configs", config_name="config")

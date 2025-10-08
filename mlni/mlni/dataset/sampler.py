@@ -2,6 +2,7 @@ import random
 
 import torch
 
+
 class SessionBatchSampler(torch.utils.data.Sampler):
     """
     Batch sampler that ensures each batch only contains samples from a single session.
