@@ -38,6 +38,15 @@ session = Data(
         description = np.array(["UNKNOWN"]),
         timekeys = ['start', 'end'],  # Only time should be adjusted during operations
     )
+
+    # In case the data includes any type of triggers. Note: These could be redundant with the other tags below.
+    triggers = IrregularTimeSeries(
+        timestamps = trigger_times,
+        type = np.array(["MOUSE_CLICK"]),
+        note = np.array([""]), # Optional note together with the trigger. Can be empty.
+        
+        timekeys = ['timestamps'],  # Only timestamps should be adjusted during operations
+    ),
     
     # In case the data includes stimulation. Note: frequency is not a parameter here! Use many electrical_stimulation events (as separate pulses) to denote the stimulation at a particular frequency.
     electrical_stimulation = IrregularTimeSeries(
