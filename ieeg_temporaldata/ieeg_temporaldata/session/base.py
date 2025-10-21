@@ -11,8 +11,8 @@ from typing import ClassVar
 import h5py
 import numpy as np
 import pandas as pd
-from brainsets.descriptions import BrainsetDescription, DeviceDescription, SessionDescription, SubjectDescription
-from brainsets.taxonomy import RecordingTech, Species
+# from brainsets.descriptions import BrainsetDescription, DeviceDescription, SessionDescription, SubjectDescription
+# from brainsets.taxonomy import RecordingTech, Species
 from mne_bids import read_raw_bids
 from temporaldata import ArrayDict, Data, RegularTimeSeries
 
@@ -50,25 +50,30 @@ class SessionBase(ABC):
         self.allow_corrupted = allow_corrupted
 
         self.data_dict = {
-            "brainset": BrainsetDescription(
-                id=self.dataset_identifier,
-                origin_version=self.dataset_version,
-                derived_version=self.dataset_version,
-                source=self.url,
-                description=self.name,
-            ),
-            "subject": SubjectDescription(
-                id=self.subject_identifier,
-                species=Species.HUMAN,
-            ),
-            "session": SessionDescription(
-                id=self.session_identifier,
-                recording_date=datetime.datetime.min,  # TODO: add recording date somehow from the data
-            ),
-            "device": DeviceDescription(
-                id="iEEG/EEG",
-                recording_tech=RecordingTech.ECOG_ARRAY_ECOGS,
-            ),
+            # Commented out while fixing the dependency issue with brainsets
+            # "brainset": BrainsetDescription(
+            #     id=self.dataset_identifier,
+            #     origin_version=self.dataset_version,
+            #     derived_version=self.dataset_version,
+            #     source=self.url,
+            #     description=self.name,
+            # ),
+            # "subject": SubjectDescription(
+            #     id=self.subject_identifier,
+            #     species=Species.HUMAN,
+            # ),
+            # "session": SessionDescription(
+            #     id=self.session_identifier,
+            #     recording_date=datetime.datetime.min,  # TODO: add recording date somehow from the data
+            # ),
+            # "device": DeviceDescription(
+            #     id="iEEG/EEG",
+            #     recording_tech=RecordingTech.ECOG_ARRAY_ECOGS,
+            # ),
+            "brainset": self.dataset_identifier,
+            "subject": self.subject_identifier,
+            "session": self.session_identifier,
+
             "allow_corrupted": self.allow_corrupted,
             "citation": self.citation,
         }
